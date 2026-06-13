@@ -187,6 +187,10 @@ const hintClass = "text-[10px] text-gray-400 dark:text-gray-600 mt-0.5";
       setShowCreate(false);
       setForm(emptyForm);
       setCinFile(null);
+      const plainPassword = newEmp?.plainPassword ?? (created as any)?.plainPassword;
+      if (plainPassword && newEmp?.email) {
+        setCreatedCredentials({ email: newEmp.email, password: plainPassword });
+      }
     } catch (err: any) { setFormError(err.response?.data?.message || "Failed to create employee"); }
     finally { setSubmitting(false); }
   };

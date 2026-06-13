@@ -41,6 +41,7 @@ export default function Sidebar() {
     PURCHASE_MANAGER:   "/dashboard/achat",
     WAREHOUSE_OPERATOR: "/dashboard/depot",
     EMPLOYEE:           "/dashboard/employee",
+    PRODUCTION_MANAGER: "/dashboard/production",
   };
   const dashboardPath = dashboardMap[user.role] || "/dashboard";
 

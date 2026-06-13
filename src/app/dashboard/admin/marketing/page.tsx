@@ -206,6 +206,10 @@ export default function AdminMarketingPage() {
       setShowCreate(false);
       setForm(emptyForm);
       setCinFile(null);
+      const plainPassword = newEmp?.plainPassword ?? (created as any)?.plainPassword;
+      if (plainPassword && newEmp?.email) {
+        setCreatedCredentials({ email: newEmp.email, password: plainPassword });
+      }
     } catch (err: any) {
       setFormError(err.response?.data?.message || "Failed to create employee");
     } finally { setSubmitting(false); }
