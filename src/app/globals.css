@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+/* Tell Tailwind to use class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =========================
+   EMM Signature — Brand tokens
+========================= */
+:root {
+  --emm-navy:         #1b2a6b;
+  --emm-navy-darkest: #060d1f;
+  --emm-navy-dark:    #0a1020;
+  --emm-navy-base:    #0d1428;
+  --emm-navy-card:    #111c35;
+  --emm-navy-border:  #1b2a6b33;
+  --emm-red:          #c8202f;
+  --emm-red-hover:    #e02d3c;
+  --emm-red-muted:    #c8202f1a;
+  --emm-red-border:   #c8202f33;
+}
+
+/* =========================
+   CSS Variables — Dark (default)
+========================= */
+:root {
+  --background: #060d1f;
+  --foreground: #ededed;
+  --accent:     #c8202f;
+  --surface:    #111c35;
+  --card:       #111c35;
+  --border:     #1b2a6b33;
+}
+
+/* =========================
+   CSS Variables — Light
+========================= */
+:root:not(.dark) {
+  --background: #f0f4ff;
+  --foreground: #1b2a6b;
+  --accent:     #c8202f;
+  --surface:    #ffffff;
+  --card:       #ffffff;
+  --border:     #1b2a6b22;
+}
+
+/* =========================
+   Base Styling
+========================= */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* =========================
+   Scrollbar
+========================= */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1b2a6b66;
+}
+
+/* =========================
+   Font Utility Classes
+========================= */
+.erp-dashboard {
+  font-family: var(--font-inter);
+}
+
+.erp-title {
+  font-family: var(--font-syne);
+}
+
+.erp-mono {
+  font-family: var(--font-inter);
+}
+
+/* =========================
+   Remove number input arrows (all browsers)
+========================= */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
