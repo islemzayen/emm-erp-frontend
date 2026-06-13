@@ -186,7 +186,7 @@ export default function HRAttendance() {
     hrService.getAllEmployees(true)
       .then((d: any) => {
         const list = Array.isArray(d) ? d : (d?.data ?? []);
-        setEmployees(list.filter((e: any) => e.role === "EMPLOYEE" || !e.role));
+        setEmployees(list);
       }).catch(() => {});
   }, []);
 

@@ -134,7 +134,7 @@ export default function HRPayroll() {
         avanceService.list(),
         dailyAttendanceService.summary(selectedMonth).catch(() => []),
       ]);
-      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []);
       const avances = Array.isArray(avancesRes) ? avancesRes : (avancesRes?.data ?? []);
       const map: Record<string, AttSummary> = {};
       for (const s of (attSummary || [])) map[s.employeeId] = s;

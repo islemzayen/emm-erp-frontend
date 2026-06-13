@@ -115,7 +115,7 @@ export default function AdminHRPage() {
   const card       = "bg-white dark:bg-[#111c35] border border-gray-200 dark:border-[#1b2a6b]/20 rounded-2xl transition-colors duration-300";
   const inputClass = "w-full px-3 py-2 bg-gray-100 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#c8202f]/60 transition";
   const labelClass = "text-xs text-gray-500 uppercase tracking-widest mb-1 block";
-
+const hintClass = "text-[10px] text-gray-400 dark:text-gray-600 mt-0.5";
   useEffect(() => { fetchAll(); }, []);
   useEffect(() => { api.get("/company-config").then(r => setCompanyCfg((r.data as any)?.data ?? r.data)).catch(() => {}); }, []);
 
@@ -274,32 +274,145 @@ export default function AdminHRPage() {
 
   // ── Reusable payroll / bulletin-de-paie fields block (Create + Edit) ──
   const payrollFields = (
-    <div className="pt-2 border-t border-gray-200 dark:border-white/10">
-      <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Payroll / Bulletin de paie</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div><label className={labelClass}>Matricule</label><input className={inputClass} value={form.matricule} onChange={e => setForm(f => ({ ...f, matricule: e.target.value }))} /></div>
-        <div><label className={labelClass}>N° CNSS</label><input className={inputClass} value={form.cnssNumber} onChange={e => setForm(f => ({ ...f, cnssNumber: e.target.value }))} /></div>
+  <div className="pt-2 border-t border-gray-200 dark:border-white/10">
+    <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-3">Payroll / Bulletin de paie</p>
+
+    {/* Row 1: Matricule + N° CNSS */}
+    <div className="grid grid-cols-2 gap-3">
+      <div>
+        <label className={labelClass}>Matricule</label>
+        <input
+          className={inputClass}
+          placeholder="e.g. MAT001"
+          maxLength={10}
+          value={form.matricule}
+          onChange={e => setForm(f => ({ ...f, matricule: e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase() }))}
+        />
+        <p className={hintClass}>Max 10 chars · alphanumeric</p>
       </div>
-      <div className="mt-3"><label className={labelClass}>Adresse</label><input className={inputClass} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <div><label className={labelClass}>Qualification</label><input className={inputClass} placeholder="OUVRIER" value={form.qualification} onChange={e => setForm(f => ({ ...f, qualification: e.target.value }))} /></div>
-        <div><label className={labelClass}>Taux horaire <span className="text-gray-400 normal-case tracking-normal">(auto = salaire/26/8)</span></label><input className={`${inputClass} opacity-70 cursor-not-allowed`} readOnly value={form.salary ? (Number(form.salary)/208).toFixed(3) : ""} placeholder="—" /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <div><label className={labelClass}>Catégorie</label><input className={inputClass} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-        <div><label className={labelClass}>Échelon</label><input className={inputClass} value={form.echelon} onChange={e => setForm(f => ({ ...f, echelon: e.target.value }))} /></div>
-      </div>
-      <div className="grid grid-cols-3 gap-3 mt-3">
-        <div><label className={labelClass}>Situation</label><input className={inputClass} placeholder="T Titulaire" value={form.situation} onChange={e => setForm(f => ({ ...f, situation: e.target.value }))} /></div>
-        <div><label className={labelClass}>Sit. familiale</label>
-          <select className={inputClass} value={form.familyStatus} onChange={e => setForm(f => ({ ...f, familyStatus: e.target.value }))}>
-            <option value="">—</option><option value="C">C</option><option value="M">M</option><option value="D">D</option><option value="V">V</option>
-          </select>
-        </div>
-        <div><label className={labelClass}>Nb enfants</label><input className={inputClass} inputMode="numeric" value={form.numChildren} onChange={e => setForm(f => ({ ...f, numChildren: e.target.value.replace(/\D/g,"") }))} /></div>
+      <div>
+        <label className={labelClass}>N° CNSS</label>
+        <input
+          className={inputClass}
+          placeholder="12345678"
+          maxLength={8}
+          inputMode="numeric"
+          value={form.cnssNumber}
+          onChange={e => setForm(f => ({ ...f, cnssNumber: e.target.value.replace(/\D/g, "") }))}
+        />
+        <p className={hintClass}>Exactly 8 digits</p>
       </div>
     </div>
-  );
+
+    {/* Row 2: Adresse */}
+    <div className="mt-3">
+      <label className={labelClass}>Adresse</label>
+      <input
+        className={inputClass}
+        placeholder="e.g. 12 Rue de la République, Tunis"
+        maxLength={100}
+        value={form.address}
+        onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+      />
+      <p className={hintClass}>Max 100 chars</p>
+    </div>
+
+    {/* Row 3: Qualification + Taux horaire */}
+    <div className="grid grid-cols-2 gap-3 mt-3">
+      <div>
+        <label className={labelClass}>Qualification</label>
+        <input
+          className={inputClass}
+          placeholder="e.g. OUVRIER"
+          maxLength={30}
+          value={form.qualification}
+          onChange={e => setForm(f => ({ ...f, qualification: e.target.value.toUpperCase() }))}
+        />
+        <p className={hintClass}>Max 30 chars · auto-uppercase</p>
+      </div>
+      <div>
+        <label className={labelClass}>
+          Taux horaire <span className="text-gray-400 normal-case tracking-normal">(auto = salaire/208)</span>
+        </label>
+        <input
+          className={`${inputClass} opacity-70 cursor-not-allowed`}
+          readOnly
+          value={form.salary ? (Number(form.salary) / 208).toFixed(3) : ""}
+          placeholder="—"
+        />
+        <p className={hintClass}>Computed automatically</p>
+      </div>
+    </div>
+
+    {/* Row 4: Catégorie + Échelon */}
+    <div className="grid grid-cols-2 gap-3 mt-3">
+      <div>
+        <label className={labelClass}>Catégorie</label>
+        <input
+          className={inputClass}
+          placeholder="e.g. A1"
+          maxLength={5}
+          value={form.category}
+          onChange={e => setForm(f => ({ ...f, category: e.target.value.toUpperCase() }))}
+        />
+        <p className={hintClass}>Max 5 chars · auto-uppercase</p>
+      </div>
+      <div>
+        <label className={labelClass}>Échelon</label>
+        <input
+          className={inputClass}
+          placeholder="e.g. 3"
+          maxLength={3}
+          inputMode="numeric"
+          value={form.echelon}
+          onChange={e => setForm(f => ({ ...f, echelon: e.target.value.replace(/\D/g, "") }))}
+        />
+        <p className={hintClass}>1–3 digits only</p>
+      </div>
+    </div>
+
+    {/* Row 5: Situation + Sit. familiale + Nb enfants */}
+    <div className="grid grid-cols-3 gap-3 mt-3">
+      <div>
+        <label className={labelClass}>Situation</label>
+        <input
+          className={inputClass}
+          placeholder="e.g. T Titulaire"
+          maxLength={20}
+          value={form.situation}
+          onChange={e => setForm(f => ({ ...f, situation: e.target.value }))}
+        />
+        <p className={hintClass}>Max 20 chars</p>
+      </div>
+      <div>
+        <label className={labelClass}>Sit. familiale</label>
+        <select
+          className={inputClass}
+          value={form.familyStatus}
+          onChange={e => setForm(f => ({ ...f, familyStatus: e.target.value }))}
+        >
+          <option value="">—</option>
+          <option value="C">C – Célibataire</option>
+          <option value="M">M – Marié(e)</option>
+          <option value="D">D – Divorcé(e)</option>
+          <option value="V">V – Veuf/Veuve</option>
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>Nb enfants</label>
+        <input
+          className={inputClass}
+          inputMode="numeric"
+          placeholder="0"
+          maxLength={2}
+          value={form.numChildren}
+          onChange={e => setForm(f => ({ ...f, numChildren: e.target.value.replace(/\D/g, "") }))}
+        />
+        <p className={hintClass}>0 – 99</p>
+      </div>
+    </div>
+  </div>
+);
 
   return (
     <ProtectedRoute allowedRoles={["ADMIN"]}>

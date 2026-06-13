@@ -83,8 +83,7 @@ export default function HRPerformance() {
         dailyAttendanceService.summary(selectedMonth).catch(() => []),
       ]);
 
-      const emps: Employee[] = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? [])
-        .filter((e: any) => e.role === "EMPLOYEE" || !e.role);
+      const emps: Employee[] = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []);
 
       const attArr: AttSummary[] = Array.isArray(attRes) ? attRes : (attRes as any)?.data ?? [];
       const attMap: Record<string, AttSummary> = {};
