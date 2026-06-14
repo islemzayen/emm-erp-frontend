@@ -8,8 +8,7 @@ export type Role =
   | "FINANCE_MANAGER"
   | "STOCK_MANAGER"
   | "PURCHASE_MANAGER"
-  | "DEPOT_MANAGER"
-  | "WAREHOUSE_OPERATOR";
+  | "DEPOT_MANAGER";
 
 export interface User {
   id: string;

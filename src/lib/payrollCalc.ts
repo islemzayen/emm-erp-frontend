@@ -1,78 +1,53 @@
 // src/lib/payrollCalc.ts
-// Tunisian payroll — "agreed salary" model.
-// The stored salary is the AGREED take-home. The 9.67% employee CNSS is neutralised
-// by grossing the salary up, so the agreed amount is untouched by CNSS:
-//   brut = agreedSalary / (1 - 9.67%)   →   brut - 9.67%·brut = agreedSalary
-// The 29.67% total CNSS (9.67% employee + 20% employer) is computed for DISPLAY ONLY.
-// Only IRPP, CSS, Absence and Avances actually reduce the take-home.
+// Tunisian payroll — "earned salary" model.
+// The stored salary is the AGREED monthly rate. Hourly rate = salary / 208.
+// Earned salary = hourly × actual hours worked (pro-rated for absences and join date).
+// CNSS is computed from the earned salary via gross-up: brut = earned / (1 - 9.67%).
+// IRPP and CSS are NOT applied (always 0).
+// Net = earned − avances.
 
 export const PAYROLL_CONSTANTS = {
-  monthlyHours:          208,     // 26 working days × 8h (hourly rate = agreedSalary / 208)
-  cnssEmployeeRate:      0.0967,  // 9.67% — employee CNSS (neutralised via gross-up)
+  monthlyHours:          208,     // 26 working days × 8h (hourly rate = salary / 208)
+  workingDaysPerMonth:   26,      // Mon–Sat; Sunday is the default weekend
+  hoursPerDay:           8,
+  cnssEmployeeRate:      0.0967,  // 9.67% — employee CNSS (grossed up from earned)
   cnssEmployerRate:      0.2000,  // 20.00% — employer CNSS (informational)
-  cssRate:               0.005,   // Contribution Sociale de Solidarité — 0.5% of taxable
-  headOfFamilyDeduction: 300,     // annual chef-de-famille abatement (DT)
-  perChildDeduction:     100,     // annual per-child abatement (DT)
-  maxChildren:           4,
-  // IRPP barème (Loi de finances 2025) — ANNUAL brackets, progressive
-  irppBrackets: [
-    { upTo: 5000,     rate: 0.00 },
-    { upTo: 10000,    rate: 0.15 },
-    { upTo: 20000,    rate: 0.25 },
-    { upTo: 30000,    rate: 0.30 },
-    { upTo: 40000,    rate: 0.33 },
-    { upTo: 50000,    rate: 0.36 },
-    { upTo: 70000,    rate: 0.38 },
-    { upTo: Infinity, rate: 0.40 },
-  ],
 };
 
 export interface PayrollInput {
-  salary?: number;               // agreed monthly take-home (preferred)
-  hourlyRate: number;            // used for absence / overtime (= salary / 208)
+  salary?: number;               // agreed monthly salary (base rate)
+  hourlyRate: number;            // = salary / 208
   monthlyHours?: number;
-  familyStatus?: string;         // "C" | "M" | "D" | "V"
-  numChildren?: number;
+  familyStatus?: string;         // kept for display — not used in tax calc
+  numChildren?: number;          // kept for display — not used in tax calc
   avancesTotal?: number;         // advances — deducted from net
-  absenceHours?: number;         // absent hours — deducted from net
-  overtimeHours?: number;        // extra hours — added to net
+  absenceHours?: number;         // absent hours — deducted from earned
+  overtimeHours?: number;        // extra hours — added to earned
 }
 
 export interface PayrollResult {
   hours: number;
   hourlyRate: number;
-  agreedSalary: number;   // the agreed take-home (untouched by CNSS)
+  agreedSalary: number;   // the agreed monthly rate
   base: number;           // alias of agreedSalary (for table display)
-  brut: number;           // grossed-up salary = agreedSalary / (1 - cnssEmployeeRate)
-  cnssEmployee: number;   // 9.67% — neutralised (brut - agreedSalary)
-  cnssTotal: number;      // 29.67% — DISPLAY ONLY, never deducted
-  imposable: number;      // taxable = agreedSalary
-  irpp: number;
-  css: number;
-  net: number;            // salaire net = imposable - irpp - css
+  earnedSalary: number;   // hourly × actual hours worked
+  brut: number;           // grossed-up earned = earned / (1 - 9.67%)
+  cnssEmployee: number;   // 9.67% of brut
+  cnssTotal: number;      // 29.67% of brut — DISPLAY ONLY
+  imposable: number;      // 0 — not calculated
+  irpp: number;           // 0 — not applied
+  css: number;            // 0 — not applied
+  net: number;            // = earned salary
   overtimeHours: number;
   overtimePay: number;
   absenceHours: number;
   absenceDeduction: number;
   avances: number;
-  netToPay: number;       // net + overtime - absence - avances
+  netToPay: number;       // earned + overtime − absence − avances
 }
 
 function round3(n: number): number {
   return Math.round(n * 1000) / 1000;
-}
-
-// Annual IRPP from annual taxable income using the progressive bracket table.
-function computeAnnualIRPP(annualTaxable: number): number {
-  let tax = 0;
-  let lower = 0;
-  for (const b of PAYROLL_CONSTANTS.irppBrackets) {
-    if (annualTaxable <= lower) break;
-    const slice = Math.min(annualTaxable, b.upTo) - lower;
-    tax += slice * b.rate;
-    lower = b.upTo;
-  }
-  return tax;
 }
 
 export function computePayroll(input: PayrollInput): PayrollResult {
@@ -87,35 +62,42 @@ export function computePayroll(input: PayrollInput): PayrollResult {
   const absenceDeduction = round3(absenceHours * hourlyRate);
   const overtimePay      = round3(overtimeHours * hourlyRate);
 
-  // CNSS gross-up — the agreed salary is preserved after the 9.67% deduction
-  const brut         = round3(agreedSalary / (1 - C.cnssEmployeeRate));
-  const cnssEmployee = round3(brut - agreedSalary);                              // = brut × 9.67%
+  // Earned salary = hourly × actual hours (from attendance records)
+  // When called with default 208h it equals the full agreed salary
+  const earnedSalary = round3(hourlyRate * hours);
+
+  // CNSS gross-up from the EARNED salary (not from agreed salary)
+  const brut         = round3(earnedSalary / (1 - C.cnssEmployeeRate));
+  const cnssEmployee = round3(brut - earnedSalary);                              // = brut × 9.67%
   const cnssTotal    = round3(brut * (C.cnssEmployeeRate + C.cnssEmployerRate)); // 29.67% — info only
 
-  const imposable = agreedSalary;   // = brut − cnssEmployee
+  // IRPP and CSS are NOT applied — always 0
+  const imposable = 0;
+  const irpp      = 0;
+  const css       = 0;
 
-  // IRPP — annualise the taxable salary, subtract family abatements, apply barème, back to monthly
-  let annualTaxable = imposable * 12;
-  const headOfFamily = input.familyStatus === "M" || (input.numChildren || 0) > 0;
-  if (headOfFamily) annualTaxable -= C.headOfFamilyDeduction;
-  annualTaxable -= Math.min(input.numChildren || 0, C.maxChildren) * C.perChildDeduction;
-  annualTaxable = Math.max(0, annualTaxable);
-  const irpp = round3(computeAnnualIRPP(annualTaxable) / 12);
-
-  const css = round3(imposable * C.cssRate);
-
-  const net      = round3(imposable - irpp - css);
+  // Net = earned salary (no IRPP/CSS deduction)
+  const net      = earnedSalary;
   const netToPay = round3(net + overtimePay - absenceDeduction - avances);
 
   return {
-    hours, hourlyRate, agreedSalary, base: agreedSalary, brut, cnssEmployee, cnssTotal,
-    imposable, irpp, css, net, overtimeHours, overtimePay, absenceHours, absenceDeduction,
+    hours, hourlyRate, agreedSalary, base: agreedSalary,
+    earnedSalary, brut, cnssEmployee, cnssTotal,
+    imposable, irpp, css, net,
+    overtimeHours, overtimePay, absenceHours, absenceDeduction,
     avances, netToPay,
   };
 }
 
-// Hourly rate from the agreed monthly salary: salaire / (26 × 8) = salary / 208.
+// Hourly rate from the agreed monthly salary: salary / (26 × 8) = salary / 208.
 export function deriveHourlyRate(monthlySalary: number, monthlyHours = PAYROLL_CONSTANTS.monthlyHours): number {
   if (!monthlySalary) return 0;
   return round3(monthlySalary / monthlyHours);
+}
+
+// Check if a date string (YYYY-MM-DD) falls on a Sunday (default weekend).
+// Used by attendance pages to exclude Sundays from absent-day counts.
+export function isSunday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  return d.getDay() === 0;
 }

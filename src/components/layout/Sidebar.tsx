@@ -39,7 +39,6 @@ export default function Sidebar() {
     COMMERCIAL_MANAGER: "/dashboard/commercial",
     FINANCE_MANAGER:    "/dashboard/finance",
     PURCHASE_MANAGER:   "/dashboard/achat",
-    WAREHOUSE_OPERATOR: "/dashboard/depot",
     EMPLOYEE:           "/dashboard/employee",
     PRODUCTION_MANAGER: "/dashboard/production",
   };
@@ -194,7 +193,6 @@ export default function Sidebar() {
     STOCK_MANAGER:      stockItems,
     PURCHASE_MANAGER:   purchaseItems,
     DEPOT_MANAGER:      depotItems,
-    WAREHOUSE_OPERATOR: depotItems,
     EMPLOYEE:           employeeItems,
   };
 

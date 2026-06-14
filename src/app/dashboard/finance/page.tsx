@@ -2,6 +2,7 @@
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { financeService, FinanceDashboardResponse, SalesReportMonth } from "@/services/finance/financeService";
+import api from "@/services/api";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -21,6 +22,7 @@ import {
   PieChart,
   Activity,
   Users,
+  Building2,
 } from "lucide-react";
 
 function tnd(v: number) {
@@ -197,6 +199,7 @@ export default function FinanceDashboardPage() {
   const [salesLoading, setSalesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [cnssTotal, setCnssTotal] = useState(0);
 
   const ENTRY_LABELS: Record<string, string> = {
     INVOICE_ISSUED: t("fin_entryInvoiceIssued"),
@@ -218,6 +221,13 @@ export default function FinanceDashboardPage() {
       const fmt = (dd: Date) => dd.toISOString().slice(0, 10);
       const r = await financeService.getSalesReport(fmt(from), fmt(to));
       setSalesData(r.byMonth);
+      // Fetch actual CNSS from the HR payroll summary (based on real attendance)
+      try {
+        const now = new Date();
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const ps = await api.get(`/payroll/summary?month=${month}`);
+        setCnssTotal(ps.data?.totals?.totalCnssTotal ?? 0);
+      } catch { setCnssTotal(0); }
       setLastRefresh(new Date());
     } catch (err: any) {
       setError(err?.response?.data?.message || "Échec du chargement");
@@ -479,6 +489,15 @@ export default function FinanceDashboardPage() {
                   icon: <Users size={14} />,
                   iconBg: "bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400",
                   valueColor: "text-violet-700 dark:text-violet-300",
+                },
+                {
+                  label: "CNSS à payer",
+                  value: tnd(cnssTotal),
+                  unit: "TND",
+                  sub: "Cotisations sociales (29.67%)",
+                  icon: <Building2 size={14} />,
+                  iconBg: "bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400",
+                  valueColor: "text-orange-700 dark:text-orange-300",
                 },
                 {
                   label: "Trésorerie nette",

@@ -97,17 +97,17 @@ export async function generatePayslip(opts: {
   const L = LABELS[lang];
   const emp = opts.employee;
   const co = opts.company || {};
-  // Fixed standard month: 26 working days × 8h = 208h. Taux horaire = salaire / 208.
-  // (Not taken from company config so a stale saved value can't change the rate.)
-  const monthlyHours = PAYROLL_CONSTANTS.monthlyHours;
+  // Taux horaire is always derived from the standard 208h rate: salary / (26 × 8)
+  const hourlyRate = deriveHourlyRate(emp.salary || 0, PAYROLL_CONSTANTS.monthlyHours);
 
-  // Taux horaire is always derived from the salary: salaire / (26 × 8) = salary / monthlyHours
-  const hourlyRate = deriveHourlyRate(emp.salary || 0, monthlyHours);
+  // Actual hours worked — passed from the payroll page via company.monthlyHours
+  // Falls back to 208 only if not provided (full month assumption)
+  const actualHours = co.monthlyHours ?? PAYROLL_CONSTANTS.monthlyHours;
 
   const p = computePayroll({
     salary: emp.salary,
     hourlyRate,
-    monthlyHours,
+    monthlyHours: actualHours,
     familyStatus: emp.familyStatus,
     numChildren: emp.numChildren,
     avancesTotal: opts.avancesTotal || 0,
@@ -206,9 +206,9 @@ export async function generatePayslip(opts: {
   const afterInfo = (doc as any).lastAutoTable.finalY + 6;
   const GRAY: [number, number, number] = [120, 120, 120];
   const body: any[] = [
-    [L.base, fmt(p.hours), fmt(p.agreedSalary), ""],
+    [L.base, fmt(PAYROLL_CONSTANTS.monthlyHours), fmt(p.agreedSalary), ""],
     [
-      { content: L.brut, styles: { fontStyle: "bold" } }, "",
+      { content: L.brut, styles: { fontStyle: "bold" } }, fmt(p.hours),
       { content: fmt(p.brut), styles: { fontStyle: "bold" } }, "",
     ],
     [L.cnssEmp, "", "", fmt(p.cnssEmployee)],

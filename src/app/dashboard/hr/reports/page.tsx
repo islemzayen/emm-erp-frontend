@@ -161,7 +161,7 @@ export default function HRReports() {
         avanceService.list(),
         dailyAttendanceService.summary(selectedMonth).catch(() => []),
       ]);
-      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const avances = Array.isArray(avancesRes) ? avancesRes : (avancesRes?.data ?? []);
       const attArr  = Array.isArray(attRes) ? attRes : (attRes as any)?.data ?? [];
       const attMap: Record<string, any> = {};
@@ -210,7 +210,7 @@ export default function HRReports() {
     setLoading(`employees-${fmt}`);
     try {
       const empsRes = await hrService.getAllEmployees(true);
-      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const headers = ["Name", "Email", "Department", "Position", "Phone", "Salary (TND)", "Status", "Joined"];
       const rows = emps.map((e: any) => [e.name, e.email, e.department, e.position || "Employee", e.phone || "—", e.salary || 0, e.status || "Active", e.joinedDate ? new Date(e.joinedDate).toLocaleDateString("en-GB") : "—"]);
       const filename = `Employees_${selectedMonth}.${fmt}`;
@@ -224,7 +224,7 @@ export default function HRReports() {
     setLoading(`performance-${fmt}`);
     try {
       const [empsRes, attRes] = await Promise.all([hrService.getAllEmployees(true), dailyAttendanceService.summary(selectedMonth).catch(() => [])]);
-      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const attArr = Array.isArray(attRes) ? attRes : (attRes as any)?.data ?? [];
       const attMap: Record<string, any> = {};
       for (const a of attArr) attMap[a.employeeId] = a;
@@ -265,7 +265,7 @@ export default function HRReports() {
         avanceService.list(),
         fetchAllMonthsAttendance(selectedYear),
       ]);
-      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps    = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const avances = Array.isArray(avancesRes) ? avancesRes : (avancesRes?.data ?? []);
 
       const headers = ["Month", "Name", "Department", "Position", "Base (TND)", "Overtime", "CNSS", "Avance", "Net (TND)"];
@@ -322,7 +322,7 @@ export default function HRReports() {
     setLoading(`employees-annual-${fmt}`);
     try {
       const empsRes = await hrService.getAllEmployees(true);
-      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const headers = ["Name", "Email", "Department", "Position", "Phone", "Salary (TND)", "Status", "Joined"];
       const rows = emps.map((e: any) => [e.name, e.email, e.department, e.position || "Employee", e.phone || "—", e.salary || 0, e.status || "Active", e.joinedDate ? new Date(e.joinedDate).toLocaleDateString("en-GB") : "—"]);
       const filename = `Employees_${selectedYear}_Annual.${fmt}`;
@@ -336,7 +336,7 @@ export default function HRReports() {
     setLoading(`performance-annual-${fmt}`);
     try {
       const [empsRes, monthlyAtt] = await Promise.all([hrService.getAllEmployees(true), fetchAllMonthsAttendance(selectedYear)]);
-      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role === "EMPLOYEE");
+      const emps = (Array.isArray(empsRes) ? empsRes : empsRes?.data ?? []).filter((e: any) => e.role !== "ADMIN");
       const headers = ["Month", "Employee", "Department", "Hours Worked", "Present Days", "Absent Days", "Extra Hours", "Score %", "Rating"];
       const rows: (string | number)[][] = [];
       for (const { label, data } of monthlyAtt) {

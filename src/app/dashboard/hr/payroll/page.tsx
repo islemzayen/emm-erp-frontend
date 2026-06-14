@@ -11,7 +11,7 @@ import { hrService } from "@/services/hrservice";
 import { avanceService } from "@/services/avanceService";
 import dailyAttendanceService from "@/services/DailyattendanceService";
 import { generatePayslip } from "@/lib/payslipDocument";
-import { computePayroll, deriveHourlyRate } from "@/lib/payrollCalc";
+import { computePayroll, deriveHourlyRate, isSunday } from "@/lib/payrollCalc";
 import api from "@/services/api";
 
 const AVATAR_COLORS = [
@@ -34,7 +34,7 @@ interface Employee {
   numChildren?: number; hourlyRate?: number;
 }
 interface AttSummary {
-  presentDays: number; absentDays: number; lateDays: number; totalExtraHours: number;
+  presentDays: number; absentDays: number; lateDays: number; totalExtraHours: number; totalHoursWorked: number;
 }
 interface PayrollRow {
   emp: Employee;
@@ -52,6 +52,7 @@ function calcRow(emp: Employee, avances: any[], att?: AttSummary): PayrollRow {
   const absenceDays   = att?.absentDays ?? 0;
   const absenceHours  = absenceDays * 8;
   const overtimeHours = att?.totalExtraHours ?? 0;
+  const actualHoursWorked = att?.totalHoursWorked ?? 0; // 0 if no attendance records
 
   const avTotal = avances
     .filter(a => a.employeeId === emp._id && (a.status === "Deducted" || a.status === "approved" || a.approved))
@@ -61,7 +62,7 @@ function calcRow(emp: Employee, avances: any[], att?: AttSummary): PayrollRow {
   const p = computePayroll({
     salary,
     hourlyRate,
-    monthlyHours: 208,
+    monthlyHours: actualHoursWorked, // actual hours from attendance, NOT 208
     familyStatus: (emp as any).familyStatus,
     numChildren: (emp as any).numChildren,
     avancesTotal: avTotal,
@@ -122,7 +123,7 @@ export default function HRPayroll() {
   }, []);
 
   const card = "bg-white dark:bg-[#0d1117] border border-gray-200 dark:border-white/[0.06] rounded-2xl transition-colors duration-300";
-  const gridCols = "2fr 1fr 0.85fr 0.95fr 0.8fr 0.8fr 1fr 0.85fr";
+  const gridCols = "2fr 0.9fr 1fr 0.85fr 0.95fr 0.8fr 0.8fr 1fr 0.85fr";
 
   useEffect(() => { fetchData(); }, [selectedMonth]);
 
@@ -146,9 +147,9 @@ export default function HRPayroll() {
   }
 
   async function exportCSV() {
-    const headers = ["Name","Department","Position","Brut (TND)","Overtime","Absent Days","Absence Deduction","CNSS","Avances","Net (TND)","Status","Month"];
+    const headers = ["Name","Department","Position","Agreed (TND)","Brut (TND)","Overtime","Absent Days","Absence Deduction","CNSS","Avances","Net (TND)","Status","Month"];
     const data = rows.map(r => [
-      r.emp.name, r.emp.department, r.emp.position, r.brut, r.overtime,
+      r.emp.name, r.emp.department, r.emp.position, r.netAgreed, r.brut, r.overtime,
       r.absenceDays, -r.absenceDeduction, r.cnss, -r.avances,
       r.net, r.emp.status || "Active", monthLabel(selectedMonth),
     ]);
@@ -198,17 +199,19 @@ export default function HRPayroll() {
         (a.status === "Deducted" || a.status === "approved" || a.approved)
       );
       const avancesTotal = empAvances.reduce((s: number, a: any) => s + (a.amount || 0), 0);
-      // Derive absence + overtime hours from the loaded daily attendance records
-      let absenceHours = 0, overtimeHours = 0;
+      // Derive absence + overtime + actual hours from the loaded daily attendance records
+      let absenceHours = 0, overtimeHours = 0, actualHoursWorked = 0;
       for (const r of dailyRecords) {
+        if (isSunday(r.date)) continue; // Sunday is weekend — skip
         const hw = r.hoursWorked ?? 0;
+        actualHoursWorked += hw;
         if (r.status === "Absent") absenceHours += 8;
         else absenceHours += Math.max(0, 8 - hw);
         overtimeHours += r.extraHours ?? 0;
       }
       await generatePayslip({
         employee: payslipRow.emp as any,
-        company: companyCfg,
+        company: { ...companyCfg, monthlyHours: actualHoursWorked },
         period: psFromMonth,
         avancesTotal,
         absenceHours,
@@ -314,10 +317,12 @@ export default function HRPayroll() {
                   );
                   const avTotal = empAvances.reduce((s: number, a: any) => s + (a.amount || 0), 0);
 
-                  // Derive absence + overtime hours exactly like handleDownloadPayslip / the PDF
-                  let absenceHours = 0, overtimeHours = 0;
+                  // Derive absence + overtime + actual hours exactly like handleDownloadPayslip / the PDF
+                  let absenceHours = 0, overtimeHours = 0, actualHoursWorked = 0;
                   for (const r of dailyRecords) {
+                    if (isSunday(r.date)) continue; // Sunday is weekend — skip
                     const hw = r.hoursWorked ?? 0;
+                    actualHoursWorked += hw;
                     if (r.status === "Absent") absenceHours += 8;
                     else absenceHours += Math.max(0, 8 - hw);
                     overtimeHours += r.extraHours ?? 0;
@@ -327,7 +332,7 @@ export default function HRPayroll() {
                   const p = computePayroll({
                     salary,
                     hourlyRate,
-                    monthlyHours: 208,
+                    monthlyHours: actualHoursWorked, // actual hours from attendance, NOT 208
                     familyStatus: (payslipRow.emp as any).familyStatus,
                     numChildren: (payslipRow.emp as any).numChildren,
                     avancesTotal: avTotal,
@@ -361,7 +366,8 @@ export default function HRPayroll() {
                           {dailyRecords.map((r, i) => {
                             const hw = r.hoursWorked ?? 0;
                             const ex = r.extraHours ?? 0;
-                            const dayAbs = r.status === "Absent" ? 8 : Math.max(0, 8 - hw);
+                            const isSun = isSunday(r.date);
+                            const dayAbs = isSun ? 0 : (r.status === "Absent" ? 8 : Math.max(0, 8 - hw));
                             const dayRed = r2(dayAbs * hourlyRate);
                             const statusColor = r.status === "Present" ? "text-[#c8202f]" : r.status === "Absent" ? "text-red-400" : "text-amber-400";
                             return (
@@ -486,6 +492,7 @@ export default function HRPayroll() {
             <div className="grid px-6 py-3 text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-600 border-b border-gray-100 dark:border-white/[0.04]"
               style={{ gridTemplateColumns: gridCols }}>
               <span>Employee</span>
+              <span>Agreed (TND)</span>
               <span>Brut (TND)</span>
               <span className="text-indigo-400">Overtime</span>
               <span className="text-red-400">Absence</span>
@@ -519,6 +526,8 @@ export default function HRPayroll() {
                       <p className="text-[10px] text-gray-400">{row.emp.department}</p>
                     </div>
                   </div>
+
+                  <p className="text-xs font-semibold text-violet-600 dark:text-violet-400">{row.netAgreed.toLocaleString()}</p>
 
                   <p className="text-xs text-gray-600 dark:text-gray-300">{row.brut.toLocaleString()}</p>
 
