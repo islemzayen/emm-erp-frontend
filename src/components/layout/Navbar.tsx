@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, Moon, User, Settings, LogOut, HelpCircle, ChevronUp,
-  Bell, Trash2, Check, X, Clock, UserCheck, UserX, Users,
+  Bell, Trash2, Check, X, Clock, UserCheck, UserX, Users, Banknote,
 } from "lucide-react";
 import deleteRequestService, { DeleteRequest } from "@/services/deleteRequestService";
 import api from "@/services/api";
@@ -20,7 +20,7 @@ interface PendingManager {
 }
 interface SystemNotif {
   _id: string;
-  type: "ACCOUNT_APPROVED" | "ACCOUNT_REJECTED";
+  type: "ACCOUNT_APPROVED" | "ACCOUNT_REJECTED" | "PAYROLL_READY";
   message: string; targetName: string; actorName: string;
   read: boolean; createdAt: string;
 }
@@ -274,25 +274,32 @@ export default function Navbar() {
                     {/* ── Account status notifications ── */}
                     {sysNotifs.map(notif => (
                       <div key={notif._id} className={`px-4 py-3 border-b border-gray-100 dark:border-[#222] last:border-0 ${
-                        notif.type === "ACCOUNT_APPROVED" ? "bg-[#c8202f]/5" : "bg-red-500/5"
+                        notif.type === "PAYROLL_READY" ? "bg-emerald-500/5"
+                        : notif.type === "ACCOUNT_APPROVED" ? "bg-[#c8202f]/5" : "bg-red-500/5"
                       }`}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2.5 flex-1 min-w-0">
                             <div className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${
-                              notif.type === "ACCOUNT_APPROVED"
+                              notif.type === "PAYROLL_READY"
+                                ? "bg-emerald-500/10 text-emerald-600"
+                                : notif.type === "ACCOUNT_APPROVED"
                                 ? "bg-[#c8202f]/10 text-[#c8202f]"
                                 : "bg-red-500/10 text-red-400"
                             }`}>
-                              {notif.type === "ACCOUNT_APPROVED"
+                              {notif.type === "PAYROLL_READY"
+                                ? <Banknote size={11} />
+                                : notif.type === "ACCOUNT_APPROVED"
                                 ? <UserCheck size={11} />
                                 : <UserX size={11} />
                               }
                             </div>
                             <div className="min-w-0">
                               <p className={`text-xs font-bold ${
-                                notif.type === "ACCOUNT_APPROVED" ? "text-[#c8202f]" : "text-red-400"
+                                notif.type === "PAYROLL_READY" ? "text-emerald-600"
+                                : notif.type === "ACCOUNT_APPROVED" ? "text-[#c8202f]" : "text-red-400"
                               }`}>
-                                {notif.type === "ACCOUNT_APPROVED" ? "Account Approved" : "Account Declined"}
+                                {notif.type === "PAYROLL_READY" ? "Payroll Ready"
+                                : notif.type === "ACCOUNT_APPROVED" ? "Account Approved" : "Account Declined"}
                               </p>
                               <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
                               <p className="text-[10px] text-gray-600 mt-1">
