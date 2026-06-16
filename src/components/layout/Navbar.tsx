@@ -20,7 +20,7 @@ interface PendingManager {
 }
 interface SystemNotif {
   _id: string;
-  type: "ACCOUNT_APPROVED" | "ACCOUNT_REJECTED" | "PAYROLL_READY";
+  type: "ACCOUNT_APPROVED" | "ACCOUNT_REJECTED" | "PAYROLL_READY" | "ADVANCE_REQUESTED" | "ADVANCE_APPROVED" | "ADVANCE_DECLINED" | "BUDGET_EXTRA_REQUEST" | "BUDGET_APPROVED" | "BUDGET_DECLINED" | "REFILL_REQUESTED" | "REFILL_APPROVED" | "REFILL_REJECTED";
   message: string; targetName: string; actorName: string;
   read: boolean; createdAt: string;
 }
@@ -200,6 +200,27 @@ export default function Navbar() {
     } catch {}
   }
 
+  async function handleAdvanceAction(notif: any, action: "approve" | "decline") {
+    try {
+      const targetId = notif.targetId;
+      if (notif.type === "BUDGET_EXTRA_REQUEST") {
+        await api.patch(`/marketing/events/${targetId}/${action}-budget`);
+      } else if (notif.type === "REFILL_REQUESTED") {
+        const status = action === "approve" ? "approved" : "rejected";
+        await api.patch(`/online-sales/refill/${targetId}/status`, { status });
+      } else {
+        await api.patch(`/avances/${targetId}/${action}`);
+      }
+      // Dismiss the notification after action
+      await api.patch(`/notifications/${notif._id}/read`);
+      setSysNotifs(prev => prev.filter(n => n._id !== notif._id));
+      setSeenManagerCount(prev => Math.max(0, prev - 1));
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err.message || `${action} failed`;
+      alert(msg);
+    }
+  }
+
   const totalAdminBadge  = pendingCount + managersCount;
   const totalManagerBadge = hrApproved.length + sysNotifs.length;
 
@@ -274,31 +295,45 @@ export default function Navbar() {
                     {/* ── Account status notifications ── */}
                     {sysNotifs.map(notif => (
                       <div key={notif._id} className={`px-4 py-3 border-b border-gray-100 dark:border-[#222] last:border-0 ${
-                        notif.type === "PAYROLL_READY" ? "bg-emerald-500/5"
+                        notif.type === "PAYROLL_READY" || notif.type === "ADVANCE_APPROVED" || notif.type === "BUDGET_APPROVED" || notif.type === "REFILL_APPROVED" ? "bg-emerald-500/5"
+                        : notif.type === "ADVANCE_REQUESTED" || notif.type === "BUDGET_EXTRA_REQUEST" || notif.type === "REFILL_REQUESTED" ? "bg-amber-500/5"
                         : notif.type === "ACCOUNT_APPROVED" ? "bg-[#c8202f]/5" : "bg-red-500/5"
                       }`}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2.5 flex-1 min-w-0">
                             <div className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${
-                              notif.type === "PAYROLL_READY"
+                              notif.type === "PAYROLL_READY" || notif.type === "ADVANCE_APPROVED" || notif.type === "BUDGET_APPROVED" || notif.type === "REFILL_APPROVED"
                                 ? "bg-emerald-500/10 text-emerald-600"
+                                : notif.type === "ADVANCE_REQUESTED" || notif.type === "BUDGET_EXTRA_REQUEST" || notif.type === "REFILL_REQUESTED"
+                                ? "bg-amber-500/10 text-amber-600"
                                 : notif.type === "ACCOUNT_APPROVED"
                                 ? "bg-[#c8202f]/10 text-[#c8202f]"
                                 : "bg-red-500/10 text-red-400"
                             }`}>
-                              {notif.type === "PAYROLL_READY"
-                                ? <Banknote size={11} />
-                                : notif.type === "ACCOUNT_APPROVED"
+                              {notif.type === "ACCOUNT_APPROVED"
                                 ? <UserCheck size={11} />
-                                : <UserX size={11} />
+                                : notif.type === "ACCOUNT_REJECTED"
+                                ? <UserX size={11} />
+                                : <Banknote size={11} />
                               }
                             </div>
                             <div className="min-w-0">
                               <p className={`text-xs font-bold ${
-                                notif.type === "PAYROLL_READY" ? "text-emerald-600"
+                                notif.type === "PAYROLL_READY" || notif.type === "ADVANCE_APPROVED" || notif.type === "BUDGET_APPROVED" || notif.type === "REFILL_APPROVED" ? "text-emerald-600"
+                                : notif.type === "ADVANCE_REQUESTED" || notif.type === "BUDGET_EXTRA_REQUEST" || notif.type === "REFILL_REQUESTED" ? "text-amber-600"
+                                : notif.type === "ADVANCE_DECLINED" || notif.type === "BUDGET_DECLINED" || notif.type === "REFILL_REJECTED" ? "text-red-400"
                                 : notif.type === "ACCOUNT_APPROVED" ? "text-[#c8202f]" : "text-red-400"
                               }`}>
                                 {notif.type === "PAYROLL_READY" ? "Payroll Ready"
+                                : notif.type === "ADVANCE_REQUESTED" ? "Advance Request"
+                                : notif.type === "ADVANCE_APPROVED" ? "Advance Approved"
+                                : notif.type === "ADVANCE_DECLINED" ? "Advance Declined"
+                                : notif.type === "BUDGET_EXTRA_REQUEST" ? "Extra Budget Request"
+                                : notif.type === "BUDGET_APPROVED" ? "Budget Approved"
+                                : notif.type === "BUDGET_DECLINED" ? "Budget Declined"
+                                : notif.type === "REFILL_REQUESTED" ? "Stock Refill Request"
+                                : notif.type === "REFILL_APPROVED" ? "Refill Approved"
+                                : notif.type === "REFILL_REJECTED" ? "Refill Rejected"
                                 : notif.type === "ACCOUNT_APPROVED" ? "Account Approved" : "Account Declined"}
                               </p>
                               <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
@@ -306,6 +341,18 @@ export default function Navbar() {
                                 By <span className="text-gray-400">{notif.actorName}</span> ·{" "}
                                 {new Date(notif.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
                               </p>
+                              {(notif.type === "ADVANCE_REQUESTED" || notif.type === "BUDGET_EXTRA_REQUEST" || notif.type === "REFILL_REQUESTED") && (
+                                <div className="flex gap-2 mt-2">
+                                  <button onClick={() => handleAdvanceAction(notif, "approve")}
+                                    className="flex-1 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition flex items-center justify-center gap-1">
+                                    <Check size={10} /> Approve
+                                  </button>
+                                  <button onClick={() => handleAdvanceAction(notif, "decline")}
+                                    className="flex-1 py-1 rounded-lg text-[10px] font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition flex items-center justify-center gap-1">
+                                    <X size={10} /> Decline
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <button onClick={() => handleDismissNotif(notif._id)}

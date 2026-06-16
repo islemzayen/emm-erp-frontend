@@ -230,15 +230,10 @@ export default function HREmployees() {
     setAvanceLoading(true); setAvanceError("");
     try {
       await avanceService.create({ employeeId: avanceEmp._id, employeeName: avanceEmp.name, department: avanceEmp.department, amount, reason: avanceForm.reason });
-      const avances = await avanceService.list({ employeeId: avanceEmp._id, status: "Pending" });
-      const list = Array.isArray(avances) ? avances : (avances?.data ?? []);
-      if (list.length > 0) await avanceService.approve(list[0]._id);
-      const emps = await hrService.getAllEmployees(true);
-      setEmployees(Array.isArray(emps) ? emps : (emps?.data ?? []));
-      setAvanceSuccess(`✓ Avance of ${amount.toLocaleString()} TND approved and deducted from ${avanceEmp.name}'s salary.`);
+      setAvanceSuccess(`✓ Advance request of ${amount.toLocaleString()} TND submitted for ${avanceEmp.name}. Finance has been notified.`);
       setAvanceForm({ amount: "", reason: "" });
       setTimeout(() => { setShowAvance(false); setAvanceSuccess(""); setAvanceEmp(null); }, 2500);
-    } catch (err: any) { setAvanceError(err?.response?.data?.message || "Failed to process avance."); }
+    } catch (err: any) { setAvanceError(err?.response?.data?.message || "Failed to submit advance request."); }
     finally { setAvanceLoading(false); }
   }
 
@@ -884,7 +879,7 @@ export default function HREmployees() {
                     </div>
                     {avanceForm.amount && Number(avanceForm.amount) > 0 && (
                       <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-xs text-amber-500 dark:text-amber-400">
-                        Next salary will be <span className="font-bold">{Math.max(0,(avanceEmp.salary||0)-Number(avanceForm.amount)).toLocaleString()} TND</span> after deduction of <span className="font-bold">{Number(avanceForm.amount).toLocaleString()} TND</span>
+                        Advance of <span className="font-bold">{Number(avanceForm.amount).toLocaleString()} TND</span> will be sent to <span className="font-bold">Finance for approval</span>. Salary will be updated after approval.
                       </div>
                     )}
                     {avanceError && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{avanceError}</p>}
@@ -892,7 +887,7 @@ export default function HREmployees() {
                       <button onClick={() => setShowAvance(false)} className="flex-1 py-2 rounded-xl text-xs border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-white/20 transition">Cancel</button>
                       <button onClick={handleAvanceSubmit} disabled={avanceLoading}
                         className="flex-1 py-2 rounded-xl text-xs bg-[#c8202f] hover:bg-[#c8202f] text-black font-bold transition disabled:opacity-50 flex items-center justify-center gap-2">
-                        {avanceLoading ? <><div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> Processing…</> : <><Wallet size={12} /> Approve & Deduct</>}
+                        {avanceLoading ? <><div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> Processing…</> : <><Wallet size={12} /> Submit Request</>}
                       </button>
                     </div>
                   </>
