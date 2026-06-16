@@ -20,6 +20,8 @@ export interface VehicleDelivery {
   planNo: string;
   planDate: string;
   status: string;
+    livreurName?: string; 
+
   zone: string;
   fuelAddedLiters?: number;
   distanceKm?: number | null;

@@ -52,8 +52,7 @@ export default function AddressInput({
   const [open, setOpen]             = useState(false);
   const [focused, setFocused]       = useState(false);
   const containerRef                = useRef<HTMLDivElement>(null);
-  const debounceRef                 = useRef<ReturnType<typeof setTimeout>>();
-
+const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Sync external value
   useEffect(() => { setQuery(value); }, [value]);
 
@@ -95,8 +94,7 @@ export default function AddressInput({
     const val = e.target.value;
     setQuery(val);
     onChange(val); // emit raw input immediately
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 350);
+if (debounceRef.current) clearTimeout(debounceRef.current);    debounceRef.current = setTimeout(() => fetchSuggestions(val), 350);
   };
 
   const handleSelect = (s: Suggestion) => {

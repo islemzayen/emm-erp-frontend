@@ -135,7 +135,7 @@ async function buildInventoryPdf(session: InventorySession, lines: InventoryLine
   // Logo
   let logoDataUrl: string | null = null;
   try {
-    const res = await fetch("/EMMlogo.png");
+    const res = await fetch("/logo.png");
     const blob = await res.blob();
     logoDataUrl = await new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -305,15 +305,17 @@ export default function StockInventoriesPage() {
     if (!user) return;
     try {
       setLoading(true); setError("");
-      const [sess, ...rest] = await Promise.all([
-        stockInventoryService.getAll(),
-        ...(canCreate ? [stockDepotService.getAll(), stockProductService.getAll()] : []),
-      ]);
-      setSessions(sess);
-      if (canCreate) {
-        setDepots(rest[0]);
-        setProducts((rest[1] as Product[]).filter((p) => p.status === "ACTIVE"));
-      }
+      const [sess, depotList, productList] = await Promise.all([
+  stockInventoryService.getAll(),
+  canCreate ? stockDepotService.getAll() : Promise.resolve([] as Depot[]),
+  canCreate ? stockProductService.getAll() : Promise.resolve([] as Product[]),
+]);
+
+setSessions(sess);
+if (canCreate) {
+  setDepots(depotList);
+  setProducts((productList as Product[]).filter((p) => p.status === "ACTIVE"));
+}
     } catch (e: any) {
       setError(e?.response?.data?.message || "Failed to load inventories.");
     } finally {

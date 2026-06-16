@@ -90,7 +90,6 @@ const emptyForm = (): CreateDeliveryPlanPayload => ({
   zone: "",
   startDate: new Date().toISOString().slice(0, 10),
   fuelAddedLiters: 0,
-  livreurName: "",
   orderIds: [],
   notes: "",
   planType: "SHIPMENT",
@@ -747,20 +746,6 @@ export default function PlanningPage() {
                       className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                     />
                   </div>
-                </div>
-
-                {/* Livreur */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
-                    Livreur
-                  </label>
-                  <input
-                    type="text"
-                    value={form.livreurName ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, livreurName: e.target.value }))}
-                    placeholder="Nom du livreur"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  />
                 </div>
 
                 {/* Order selection — only for SHIPMENT plans */}

@@ -15,7 +15,7 @@ export interface DeliveryPlan {
   carrierId?: Carrier | null;
   zone?: string;
   startDate?: string | null;
-  livreurName?: string;
+  
   fuelAddedLiters?: number;
   distanceKm?: number | null;
   orderIds: SalesOrder[];

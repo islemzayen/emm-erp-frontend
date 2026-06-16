@@ -409,8 +409,7 @@ export default function PurchaseDashboardPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={fmtShort} />
                   <Tooltip
-                    formatter={(v: number) => [`${fmt(v)} TND`, "Dépenses TTC"]}
-                    contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
+formatter={(v: number | undefined) => [`${fmt(v ?? 0)} TND`, "Dépenses TTC"]}                    contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
                     cursor={{ fill: "#f1f5f9" }}
                   />
                   <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={48} />

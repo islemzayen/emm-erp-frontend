@@ -146,8 +146,7 @@ export default function PurchaseReportsPage() {
 
   const metrics = useMemo(() => {
     const totalSpend = filteredInvoices.reduce((sum, invoice) => sum + invoice.totalTtc, 0);
-    const totalRefunds = filteredReturns.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
-    const realizedSpend = totalSpend - totalRefunds;
+const totalRefunds = filteredReturns.reduce((sum, item) => sum + (item.totalTtc || 0), 0);    const realizedSpend = totalSpend - totalRefunds;
     const budget = filteredRequests.reduce(
       (sum, request) => sum + Number(request.availableBudget || 0),
       0

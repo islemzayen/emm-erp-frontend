@@ -11,7 +11,7 @@ import {
   TriangleAlert, ClipboardList, ClipboardCheck, Warehouse, Wallet,
   CreditCard, CalendarDays, Receipt, Settings, Building2, Landmark,
   Car, Globe, ShieldAlert, Sparkles, BookOpen, BookMarked, Tag,
-  FolderOpen, Share2, Factory, Activity, Store,
+  FolderOpen, Share2, Factory, Activity, Store, Banknote,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -104,7 +104,6 @@ export default function Sidebar() {
     { href: "/dashboard/commercial/ordonnancement", label: "Ordonnancement",                    icon: Sparkles        },
     { href: "/dashboard/commercial/preparation",    label: "Preparation",                       icon: Package         },
     { href: "/dashboard/commercial/planning",       label: t("deliveryPlanning") || "Delivery Planning", icon: CalendarDays },
-    { href: "/dashboard/commercial/invoices",       label: "Invoices",                          icon: Receipt         },
     { href: "/dashboard/commercial/carriers",       label: t("carriersTitle") || "Carriers",    icon: Truck           },
     { href: "/dashboard/commercial/vehicule",       label: t("fleetTitle") || "Vehicles",       icon: Car             },
     { href: "/dashboard/commercial/prices",         label: "Prix de vente",                     icon: Tag             },
@@ -141,6 +140,7 @@ export default function Sidebar() {
     { href: "/dashboard/finance/payments",    label: t("fin_navPayments"),   icon: CreditCard      },
     { href: "/dashboard/finance/kumbil",      label: t("fin_navKumbil"),     icon: CalendarDays    },
     { href: "/dashboard/finance/payables",    label: t("fin_navPayables"),   icon: DollarSign      },
+    { href: "/dashboard/finance/emprunts",    label: "Emprunts",             icon: Banknote        },
     { href: "/dashboard/finance/treasury",    label: t("fin_navTreasury"),   icon: Wallet          },
     { href: "/dashboard/finance/journal",     label: t("fin_navJournal"),    icon: BookOpen        },
     { href: "/dashboard/finance/accounts",    label: t("fin_navAccounts"),   icon: Landmark        },

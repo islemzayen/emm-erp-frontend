@@ -31,7 +31,7 @@ export async function exportToPdf(
   // Load EMM logo
   let logoDataUrl: string | null = null;
   try {
-    const res = await fetch("/EMMlogo.png");
+    const res = await fetch("/logo.png");
     const blob = await res.blob();
     logoDataUrl = await new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -641,7 +641,7 @@ export function openFournisseurDocument(opts: FournisseurDocumentOptions): void 
   <table style="margin-bottom:18px">
     <tr>
       <td style="vertical-align:top;width:55%">
-        <img src="${typeof window !== "undefined" ? window.location.origin : ""}/EMMlogo.png" alt="${companyName}" style="height:60px;max-width:180px;object-fit:contain;display:block;margin-bottom:8px"/>
+        <img src="${typeof window !== "undefined" ? window.location.origin : ""}/logo.png" alt="${companyName}" style="height:60px;max-width:180px;object-fit:contain;display:block;margin-bottom:8px"/>
         <div style="font-size:11px;color:#64748b;margin-top:3px">${companyAddress}</div>
         <div style="font-size:11px;color:#64748b;margin-top:1px">Tél : ${companyPhone} &nbsp;·&nbsp; ${companyEmail}</div>
         ${companyMf || companyRne ? `<div style="font-size:11px;color:#64748b;margin-top:4px">${companyMf ? `<strong>MF :</strong> ${companyMf}` : ""}${companyMf && companyRne ? " &nbsp;|&nbsp; " : ""}${companyRne ? `<strong>RNE :</strong> ${companyRne}` : ""}</div>` : ""}
@@ -679,7 +679,7 @@ export function openFournisseurDocument(opts: FournisseurDocumentOptions): void 
       <td style="width:48%;vertical-align:top;border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#64748b;font-weight:600;margin-bottom:6px">Acheteur</div>
         <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px">
-          <img src="${typeof window !== "undefined" ? window.location.origin : ""}/EMMlogo.png" alt="${companyName}" style="height:22px;object-fit:contain"/>
+          <img src="${typeof window !== "undefined" ? window.location.origin : ""}/logo.png" alt="${companyName}" style="height:22px;object-fit:contain"/>
           ${companyName}
         </div>
         <div style="font-size:11px;color:#64748b;margin-top:3px">${companyAddress}</div>
@@ -899,7 +899,7 @@ export function openClientDocument(opts: ClientDocumentOptions): void {
   <table style="margin-bottom:18px">
     <tr>
       <td style="vertical-align:top;width:55%">
-        <img src="${origin}/EMMlogo.png" alt="${companyName}" style="height:60px;max-width:180px;object-fit:contain;display:block;margin-bottom:8px"/>
+        <img src="${origin}/logo.png" alt="${companyName}" style="height:60px;max-width:180px;object-fit:contain;display:block;margin-bottom:8px"/>
         <div style="font-size:11px;color:#64748b;margin-top:3px">${companyAddress}</div>
         <div style="font-size:11px;color:#64748b;margin-top:1px">Tél : ${companyPhone} &nbsp;·&nbsp; ${companyEmail}</div>
         ${companyMf || companyRne ? `<div style="font-size:11px;color:#64748b;margin-top:4px">${companyMf ? `<strong>MF :</strong> ${companyMf}` : ""}${companyMf && companyRne ? " &nbsp;|&nbsp; " : ""}${companyRne ? `<strong>RNE :</strong> ${companyRne}` : ""}</div>` : ""}
@@ -940,7 +940,7 @@ export function openClientDocument(opts: ClientDocumentOptions): void {
       <td style="width:48%;vertical-align:top;border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#64748b;font-weight:600;margin-bottom:6px">Vendeur</div>
         <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px">
-          <img src="${origin}/EMMlogo.png" alt="${companyName}" style="height:22px;object-fit:contain"/>
+          <img src="${origin}/logo.png" alt="${companyName}" style="height:22px;object-fit:contain"/>
           ${companyName}
         </div>
         <div style="font-size:11px;color:#64748b;margin-top:3px">${companyAddress}</div>

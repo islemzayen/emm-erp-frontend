@@ -142,7 +142,7 @@ export default function VehicleDetailPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER", "WAREHOUSE_OPERATOR"]}>
+      <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER"]}>
         <div className="flex items-center justify-center gap-2 py-32 text-sm text-slate-500">
           <Loader2 size={16} className="animate-spin" /> Chargement...
         </div>
@@ -152,7 +152,7 @@ export default function VehicleDetailPage() {
 
   if (error || !vehicle) {
     return (
-      <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER", "WAREHOUSE_OPERATOR"]}>
+      <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER"]}>
         <div className="py-20 text-center text-sm text-rose-500">{error || "Véhicule introuvable"}</div>
       </ProtectedRoute>
     );
@@ -162,7 +162,7 @@ export default function VehicleDetailPage() {
   const c = durColor(durPct);
 
   return (
-    <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER", "WAREHOUSE_OPERATOR"]}>
+    <ProtectedRoute allowedRoles={["ADMIN", "COMMERCIAL_MANAGER"]}>
       <div className="space-y-6">
 
         {/* Back + header */}

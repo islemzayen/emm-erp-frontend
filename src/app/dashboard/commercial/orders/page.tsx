@@ -53,6 +53,36 @@ const EMPTY_ORDER_LINE: OrderLine = {
   discount: "",
 };
 
+const DEFAULT_TVA    = 19;
+const DEFAULT_FODEC  = 1;
+const DEFAULT_TIMBRE = 1;
+const TAX_MULT       = 1 + DEFAULT_TVA / 100 + DEFAULT_FODEC / 100; // 1.20
+
+function r3(n: number) { return Math.round(n * 1000) / 1000; }
+
+function computeBreakdown(lines: OrderLine[], mode: "HT_BASED" | "TTC_BASED") {
+  let subtotalHt = 0;
+  for (const l of lines) {
+    const qty      = Number(l.quantity)  || 0;
+    const price    = Number(l.unitPrice) || 0;
+    const discount = Number(l.discount)  || 0;
+    if (qty <= 0 || price <= 0) continue;
+    const htPrice  = mode === "TTC_BASED" ? price / TAX_MULT : price;
+    subtotalHt    += qty * htPrice * (1 - discount / 100);
+  }
+  const totalTva    = r3(subtotalHt * DEFAULT_TVA   / 100);
+  const totalFodec  = r3(subtotalHt * DEFAULT_FODEC / 100);
+  const avantTimbre = r3(subtotalHt + totalTva + totalFodec);
+  return {
+    subtotalHt:   r3(subtotalHt),
+    totalTva,
+    totalFodec,
+    avantTimbre,
+    timbre:       DEFAULT_TIMBRE,
+    totalTtc:     r3(avantTimbre + DEFAULT_TIMBRE),
+  };
+}
+
 function addDays(date: Date, days: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
@@ -551,7 +581,13 @@ export default function CommercialOrdersPage() {
                 {t("orderLines")}
               </p>
               <div className="mb-1 hidden grid-cols-[1fr_100px_120px_100px_36px] gap-3 md:grid">
-                {["Product", t("quantity") || "Qty", t("unitPrice") || "Unit Price", "Remise", ""].map((h, i) => (
+                {[
+                  "Product",
+                  t("quantity") || "Qty",
+                  form.pricingMode === "TTC_BASED" ? "Prix TTC (sans timbre)" : "Prix HT",
+                  "Remise",
+                  "",
+                ].map((h, i) => (
                   <span key={i} className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{h}</span>
                 ))}
               </div>
@@ -564,10 +600,14 @@ export default function CommercialOrdersPage() {
                       onChange={(e) => {
                         const pid = e.target.value;
                         const product = products.find((p) => p._id === pid);
+                        // Catalogue price is shown as-is in both modes. The pricing
+                        // mode only controls whether tax is added (HT) or backed out (TTC).
+                        const catalogPrice = product?.salePrice ?? 0;
+                        const suggested = catalogPrice > 0 ? String(catalogPrice) : "";
                         setLines((prev) =>
                           prev.map((l, i) =>
                             i === index
-                              ? { ...l, productId: pid, unitPrice: product?.salePrice ? String(product.salePrice) : l.unitPrice }
+                              ? { ...l, productId: pid, unitPrice: suggested || l.unitPrice }
                               : l
                           )
                         );
@@ -589,13 +629,13 @@ export default function CommercialOrdersPage() {
                       onChange={(e) => updateLine(index, "quantity", e.target.value)}
                     />
                     <input
-                      className={`${inputClass} cursor-not-allowed opacity-70`}
+                      className={inputClass}
                       type="number"
                       min="0"
-                      placeholder="—"
+                      step="0.001"
+                      placeholder={form.pricingMode === "TTC_BASED" ? "Prix TTC" : "Prix HT"}
                       value={line.unitPrice}
-                      readOnly
-                      tabIndex={-1}
+                      onChange={(e) => updateLine(index, "unitPrice", e.target.value)}
                     />
                     <div className="relative">
                       <input
@@ -625,6 +665,50 @@ export default function CommercialOrdersPage() {
               >
                 <Plus size={12} /> {t("addLineBtn")}
               </button>
+
+              {/* Live tax breakdown */}
+              {(() => {
+                const bd = computeBreakdown(lines, form.pricingMode);
+                if (bd.subtotalHt === 0) return null;
+                const fmtTnd = (v: number) =>
+                  v.toLocaleString("fr-TN", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + " TND";
+                return (
+                  <div className="mt-4 flex justify-end">
+                    <div className="w-72 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 space-y-1.5">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                        Récapitulatif — aperçu
+                      </p>
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>Sous-total HT</span>
+                        <span className="font-medium tabular-nums">{fmtTnd(bd.subtotalHt)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>TVA ({DEFAULT_TVA}%)</span>
+                        <span className="tabular-nums">+ {fmtTnd(bd.totalTva)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>FODEC ({DEFAULT_FODEC}%)</span>
+                        <span className="tabular-nums">+ {fmtTnd(bd.totalFodec)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-1.5">
+                        <span>Avant timbre</span>
+                        <span className="tabular-nums">{fmtTnd(bd.avantTimbre)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>Timbre fiscal</span>
+                        <span className="tabular-nums">+ {fmtTnd(bd.timbre)}</span>
+                      </div>
+                      <div className="flex justify-between rounded-xl bg-slate-900 px-3 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-950">
+                        <span>Total TTC</span>
+                        <span className="tabular-nums">{fmtTnd(bd.totalTtc)}</span>
+                      </div>
+                      <p className="pt-1 text-[10px] text-slate-400 dark:text-slate-600">
+                        Aperçu basé sur TVA {DEFAULT_TVA}% / FODEC {DEFAULT_FODEC}% / Timbre {DEFAULT_TIMBRE} TND
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

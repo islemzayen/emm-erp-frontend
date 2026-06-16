@@ -2,7 +2,7 @@
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEffect, useMemo, useState } from "react";
-import { tenderService, Tender, TenderOffer } from "@/services/purchase/tenderService";
+import { tenderService, Tender, TenderOffer, TenderStatus } from "@/services/purchase/tenderService";
 import { purchaseRequestService } from "@/services/purchase/purchaseRequestService";
 import { supplementaryRequestService, SupplementaryRequest } from "@/services/purchase/supplementaryRequestService";
 import { supplierService, Supplier } from "@/services/purchase/supplierService";

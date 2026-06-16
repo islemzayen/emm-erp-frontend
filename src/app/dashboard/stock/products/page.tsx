@@ -28,7 +28,7 @@ interface Product {
   isLotTracked: boolean;
   status: "ACTIVE" | "INACTIVE";
   purchasePrice?: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface SkuSetting {

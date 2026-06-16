@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
-});
+baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,});
 
 // In-memory token store — set by AuthContext after login
 let _token: string | null = null;

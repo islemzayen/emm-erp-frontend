@@ -3,6 +3,7 @@ import api from "../api";
 export interface Customer {
   _id: string;
   name: string;
+  company?: string;
   email?: string;
   phone?: string;
   address?: string;

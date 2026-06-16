@@ -8,6 +8,7 @@ import {
 } from "@/services/commercial/salesOrderService";
 import { stockDepotService, type Depot } from "@/services/stock/stockDepotService";
 import { stockItemService } from "@/services/stock/stockItemService";
+import { vehicleService } from "@/services/commercial/vehicleService";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -129,6 +130,7 @@ export default function OrdonnancementPage() {
   const [stockByProduct, setStockByProduct] = useState<Record<string, number>>({});
   const [stockByProductDepot, setStockByProductDepot] = useState<Record<string, number>>({});
   const [depots, setDepots] = useState<Depot[]>([]);
+  const [maxVehicleCapacity, setMaxVehicleCapacity] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
@@ -143,11 +145,18 @@ export default function OrdonnancementPage() {
       setLoading(true);
       setError("");
 
-      const [orderData, itemData, depotData] = await Promise.all([
+      const [orderData, itemData, depotData, vehicleData] = await Promise.all([
         salesOrderService.getAll(),
         stockItemService.getAll(),
         stockDepotService.getAll(),
+        vehicleService.getActive(),
       ]);
+
+      const maxCapacity = vehicleData.reduce(
+        (max, vehicle) => Math.max(max, Number(vehicle.capacityPackets || 0)),
+        0
+      );
+      setMaxVehicleCapacity(maxCapacity);
 
       const visibleOrders = (orderData as SalesOrder[])
         .filter((order) => {
@@ -442,6 +451,12 @@ export default function OrdonnancementPage() {
 
     const totalWithoutCurrent = totalAllocated(nextAllocations) - normalizedQty;
     let cappedQty = Math.min(normalizedQty, Math.max(0, line.quantity - totalWithoutCurrent));
+
+    // Cap by the largest active vehicle's packet capacity — a single allocation
+    // cannot exceed what the biggest available vehicle can carry.
+    if (maxVehicleCapacity > 0) {
+      cappedQty = Math.min(cappedQty, maxVehicleCapacity);
+    }
 
     if (nextAllocation.depotId) {
       const product = line.productId!;
@@ -872,6 +887,14 @@ export default function OrdonnancementPage() {
                                 {production}
                               </span>
                             </div>
+                            {maxVehicleCapacity > 0 ? (
+                              <div>
+                                Max / véhicule:{" "}
+                                <span className="font-semibold text-slate-900 dark:text-white">
+                                  {maxVehicleCapacity}
+                                </span>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
 
@@ -914,7 +937,11 @@ export default function OrdonnancementPage() {
                                   <input
                                     type="number"
                                     min={0}
-                                    max={line.quantity}
+                                    max={
+                                      maxVehicleCapacity > 0
+                                        ? Math.min(line.quantity, maxVehicleCapacity)
+                                        : line.quantity
+                                    }
                                     className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
                                     value={allocation.allocatedQuantity}
                                     disabled={isReadOnly}
