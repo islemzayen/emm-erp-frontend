@@ -22,6 +22,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
+import { Suspense } from "react";
 
 type StockItem = {
   productId: {
@@ -122,7 +123,7 @@ function normalizeAllocations(allocations: AllocationRow[]) {
   );
 }
 
-export default function OrdonnancementPage() {
+function OrdonnancementContent() {
   const params = useSearchParams();
   const focusId = params.get("order");
 
@@ -1018,5 +1019,17 @@ export default function OrdonnancementPage() {
         )}
       </div>
     </ProtectedRoute>
+  );
+}
+export default function OrdonnancementPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center gap-2 py-20 text-sm text-slate-500">
+        <Loader2 size={18} className="animate-spin" />
+        Loading...
+      </div>
+    }>
+      <OrdonnancementContent />
+    </Suspense>
   );
 }
