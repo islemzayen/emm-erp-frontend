@@ -448,9 +448,9 @@ export default function HRAttendance() {
               {/* ── Action buttons ── */}
               <div className="flex items-center gap-2">
                 <button onClick={exportDailyCSV} disabled={loading || filteredEmps.length === 0}
-                  title="Export to CSV"
+                  title="Export to XlSX"
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition bg-[#c8202f]/10 text-[#c8202f] border border-[#c8202f]/20 hover:bg-[#c8202f]/20 disabled:opacity-40 disabled:cursor-not-allowed">
-                  <Download size={13} /> CSV
+                  <Download size={13} /> XLSX
                 </button>
                 <button onClick={exportDailyPDF} disabled={loading || filteredEmps.length === 0}
                   title="Print / Export to PDF"
