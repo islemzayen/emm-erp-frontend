@@ -8,7 +8,7 @@ import {
   ShoppingCart, CheckCircle, Clock, TrendingUp,
   Search, Plus, Download, RefreshCw, X, Tag, Loader2, Trash2, ArrowRight, Check,
 } from "lucide-react";
-import { salesService, type OnlineOrder, type OnlineProduct } from "@/services/salesService";
+import { salesService, type OnlineOrder, type OnlineProduct, type ActiveCampaign } from "@/services/salesService";
 import { exportBrandedXlsx } from "@/lib/reportExport";
 import PhoneInput from "@/components/PhoneInput";
 import AddressInput from "@/components/AddressInput";
@@ -54,6 +54,7 @@ export default function OrdersPage() {
   const [showCreate, setShowCreate]   = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [products, setProducts]       = useState<OnlineProduct[]>([]);
+  const [campaigns, setCampaigns]     = useState<ActiveCampaign[]>([]);
   const [promoValid, setPromoValid]   = useState<any>(null);
   const [promoChecking, setPromoChecking] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -61,6 +62,7 @@ export default function OrdersPage() {
   const emptyOrderForm = {
     customerName: "", customerEmail: "", customerPhone: "", customerAddress: "",
     promotionCode: "",
+    campaignId: "",
     lines: [{ productId: "", quantity: 1, unitPrice: 0, productName: "", sku: "" }] as
       { productId: string; quantity: number; unitPrice: number; productName: string; sku: string }[],
   };
@@ -80,11 +82,17 @@ export default function OrdersPage() {
     catch (e) { console.error(e); }
   };
 
+  const loadCampaigns = async () => {
+    try { setCampaigns(await salesService.getActiveCampaigns()); }
+    catch (e) { console.error(e); }
+  };
+
   const openCreate = () => {
     setOrderForm(emptyOrderForm);
     setPromoValid(null);
     setCreateError("");
     loadProducts();
+    loadCampaigns();
     setShowCreate(true);
   };
 
@@ -132,6 +140,7 @@ export default function OrdersPage() {
         customer: { name: orderForm.customerName, email: orderForm.customerEmail, phone: orderForm.customerPhone, address: orderForm.customerAddress },
         lines: orderForm.lines.map(l => ({ productId: l.productId, quantity: l.quantity, unitPrice: l.unitPrice, productName: l.productName, sku: l.sku })),
         promotionCode: orderForm.promotionCode || undefined,
+        campaignId: orderForm.campaignId || undefined,
       } as any);
       setShowCreate(false);
       setOrderForm(emptyOrderForm);
@@ -535,6 +544,24 @@ export default function OrdersPage() {
                   {promoValid && (
                     <p className="text-[10px] text-[#c8202f] mt-1">✓ {promoValid.name} — {promoValid.discount}% off</p>
                   )}
+                </div>
+
+                {/* Campaign (optional) */}
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-widest mb-1 block">{t("campaign")}</label>
+                  <select
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#c8202f]/60 transition"
+                    value={orderForm.campaignId}
+                    onChange={e => setOrderForm(f => ({ ...f, campaignId: e.target.value }))}
+                  >
+                    <option value="">— No campaign —</option>
+                    {campaigns.map(c => (
+                      <option key={c._id} value={c._id}>{c.name} ({c.channel})</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Attribute this order to a campaign — updates its leads and conversion rate.
+                  </p>
                 </div>
 
                 {/* Total */}

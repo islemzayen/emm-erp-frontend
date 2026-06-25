@@ -159,6 +159,13 @@ export const salesService = {
     return data;
   },
 
+  // Active campaigns for order attribution (reuses the dashboard /stats payload,
+  // so no extra route or Marketing-role permission is required).
+  getActiveCampaigns: async (): Promise<ActiveCampaign[]> => {
+    const { data } = await api.get("/online-sales/stats");
+    return (data.activeCampaigns ?? []) as ActiveCampaign[];
+  },
+
   // ── Products / Catalog ──────────────────────────────────────────────────────
   getProducts: async (params?: { search?: string; status?: string }) => {
     const { data } = await api.get("/online-sales/products", { params });
